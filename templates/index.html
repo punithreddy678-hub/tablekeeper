@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tablekeeper — Reserve & Manage Premier Dining</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <!-- Official Google Identity Services SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+  <!-- Top Glassmorphic Navigation -->
+  <header>
+    <div class="brand">
+      <span class="mark">TK</span>
+      <span class="brand-name">tablekeeper</span>
+    </div>
+    <nav id="dinerNav">
+      <a href="#discover">Discover</a>
+      <a href="#reservations">My Bookings</a>
+      <a href="#restaurants">How It Works</a>
+      <a href="#lab">Concurrency Lab</a>
+    </nav>
+    <div class="header-actions">
+      <button class="mode-toggle" id="portalBtn" onclick="togglePortalView()">
+        <span class="icon">💼</span> Partner Portal
+      </button>
+      
+      <!-- Guest Auth UI -->
+      <button class="ghost" id="dinerAuthBtn" onclick="openAuth()">Sign in</button>
+
+      <div id="userBadgeNav" class="user-nav-badge" hidden>
+        <img id="userNavAvatar" class="user-avatar" src="" alt="Avatar" onerror="this.style.display='none'; document.getElementById('userNavAvatarFallback').style.display='inline-flex';">
+        <span id="userNavAvatarFallback" class="user-avatar-fallback">👤</span>
+        <span id="userNavName">Google User</span>
+        <button class="logout-btn" onclick="googleUserLogout()">Logout</button>
+      </div>
+
+      <!-- Owner Auth UI -->
+      <div id="ownerBadgeNav" class="owner-nav-badge" hidden>
+        <span class="live-dot"></span>
+        <span id="ownerNavName">Owner Portal</span>
+        <button class="logout-btn" onclick="ownerLogout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- GUEST / DINER VIEW -->
+    <div id="dinerView">
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">PREMIER RESTAURANT RESERVATIONS</div>
+          <h1>Find your table.<br><em>Keep your plans.</em></h1>
+          <p>Discover hand-crafted culinary experiences, view real-time table availability, and book with server-grade confidence.</p>
+          
+          <div class="searchbar">
+            <div class="field-group">
+              <label>Search</label>
+              <input id="q" placeholder="Restaurant or cuisine">
+            </div>
+            <div class="field-group">
+              <label>Date</label>
+              <input id="date" type="date" value="2026-09-28">
+            </div>
+            <div class="field-group">
+              <label>Time</label>
+              <select id="time">
+                <option>7:00 PM</option>
+                <option>6:30 PM</option>
+                <option>7:30 PM</option>
+                <option>8:00 PM</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Party</label>
+              <select id="party">
+                <option>2 guests</option>
+                <option>3 guests</option>
+                <option>4 guests</option>
+                <option>6 guests</option>
+              </select>
+            </div>
+            <button class="btn-primary" onclick="discover()">Find a table</button>
+          </div>
+        </div>
+
+        <div class="hero-photo">
+          <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1400&q=85" alt="Fine Dining">
+          <div class="floating">
+            <div class="floating-header">
+              <strong>Tonight, 7:00 PM</strong>
+              <span class="status-pill status-confirmed">Confirmed</span>
+            </div>
+            <span>2 guests · Downtown</span>
+            <b>● Table 03 reserved</b>
+          </div>
+        </div>
+      </section>
+
+      <!-- Restaurant Cards Section -->
+      <section id="discover" class="section">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">CURATED DINING</span>
+            <h2>Featured Restaurants</h2>
+          </div>
+          <button class="outline" onclick="loadRestaurants()">Refresh</button>
+        </div>
+        <div id="cards" class="cards"></div>
+        <div id="tablePicker" class="table-picker" hidden></div>
+      </section>
+
+      <!-- How It Works Band -->
+      <section id="restaurants" class="band">
+        <div>
+          <span class="eyebrow">THE TABLEKEEPER GUARANTEE</span>
+          <h2>From craving to confirmed in seconds.</h2>
+        </div>
+        <div class="steps">
+          <div>
+            <span>01</span>
+            <h3>Discover</h3>
+            <p>Explore top restaurants, curated cuisines, and real-time seating capacity.</p>
+          </div>
+          <div>
+            <span>02</span>
+            <h3>Select Table</h3>
+            <p>Pick the exact table number for your party size with live availability checks.</p>
+          </div>
+          <div>
+            <span>03</span>
+            <h3>Owner Review</h3>
+            <p>Your request is sent directly to the restaurant host for swift approval.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reservations Section -->
+      <section id="reservations" class="section">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">YOUR DINING TIMELINE</span>
+            <h2>My Reservations</h2>
+          </div>
+          <button class="outline" onclick="loadReservations()">Refresh</button>
+        </div>
+        <div id="resList" class="reservation-list"></div>
+      </section>
+
+      <!-- Developer Concurrency Lab -->
+      <section id="lab" class="lab">
+        <div class="lab-head">
+          <div>
+            <span class="eyebrow">DEVELOPER DEMO</span>
+            <h2>Concurrency & Transaction Lab</h2>
+            <p>Demonstrates server-side SQLite WAL isolation and immediate serializable locks during high-traffic surges.</p>
+          </div>
+          <div class="shield">🛡️</div>
+        </div>
+
+        <div class="lab-grid">
+          <div class="panel">
+            <label>Restaurant
+              <select id="labRestaurant">
+                <option value="1">The Olive Garden</option>
+                <option value="2">Juniper & Co.</option>
+              </select>
+            </label>
+            <label>Target Table<span class="fake">Table 01 (2-seater)</span></label>
+            <label>Target Slot<span class="fake">Sep 28, 2026 · 9:00 PM</span></label>
+            <label>Simultaneous Threads
+              <select id="req">
+                <option>10</option>
+                <option>20</option>
+                <option>50</option>
+              </select>
+            </label>
+            <button class="btn-primary" onclick="runConcurrency()">Run Concurrency Test →</button>
+          </div>
+
+          <div class="result">
+            <div class="result-title">SIMULATION MONITOR</div>
+            <div id="labResult">
+              <strong>Ready to test</strong>
+              <p>Simulate concurrent HTTP POST reservation attempts against the server transaction lock.</p>
+            </div>
+          </div>
+
+          <div class="panel idem">
+            <div class="idem-copy">
+              <div class="result-title">IDEMPOTENCY SUITE</div>
+              <h3>5 Identical Requests, 1 Key.</h3>
+              <p>Protects network retries against double-charges and duplicate table creation.</p>
+            </div>
+            <button class="outline" onclick="runIdem()">Run Idempotency Test</button>
+            <div id="idemResult"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RESTAURANT OWNER PORTAL VIEW -->
+    <div id="ownerPortal" class="owner-portal" hidden>
+      <section class="owner-hero">
+        <div class="owner-hero-copy">
+          <div class="eyebrow">RESTAURANT MANAGEMENT PORTAL</div>
+          <h1 id="portalRestName">Owner Dashboard</h1>
+          <p id="portalRestMeta">Manage incoming table booking requests, confirm guest reservations, and monitor floor availability.</p>
+        </div>
+        <div class="owner-quick-switch">
+          <span>Logged in as: <strong id="portalOwnerName">-</strong></span>
+          <button class="outline btn-sm" onclick="openOwnerAuth()">Switch Account</button>
+        </div>
+      </section>
+
+      <!-- Owner Metrics Grid -->
+      <section class="metrics-grid">
+        <div class="metric-card highlight-pending">
+          <div class="metric-title">PENDING APPROVAL</div>
+          <div class="metric-val" id="countPending">0</div>
+          <span class="metric-desc">Requires owner action</span>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">CONFIRMED BOOKINGS</div>
+          <div class="metric-val" id="countConfirmed">0</div>
+          <span class="metric-desc">Seats reserved</span>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">DECLINED / CANCELLED</div>
+          <div class="metric-val" id="countDeclined">0</div>
+          <span class="metric-desc">Released tables</span>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">TOTAL FLOOR TABLES</div>
+          <div class="metric-val" id="countTables">8</div>
+          <span class="metric-desc">Active configurations</span>
+        </div>
+      </section>
+
+      <!-- Owner Reservations Management List -->
+      <section class="owner-manage-section">
+        <div class="manage-head">
+          <h3>Incoming Booking Requests</h3>
+          <div class="tab-filters">
+            <button class="tab-btn active" onclick="filterOwnerTab('ALL', this)">All</button>
+            <button class="tab-btn" onclick="filterOwnerTab('pending', this)">Pending (<span id="tabCountPending">0</span>)</button>
+            <button class="tab-btn" onclick="filterOwnerTab('confirmed', this)">Confirmed</button>
+            <button class="tab-btn" onclick="filterOwnerTab('declined', this)">Declined</button>
+          </div>
+        </div>
+
+        <div id="ownerResList" class="owner-res-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="brand">
+      <span class="mark">TK</span> tablekeeper
+    </div>
+    <span>Designed for reliable restaurant hospitality.</span>
+    <span>© 2026 Tablekeeper Inc.</span>
+  </footer>
+
+  <div id="toast"></div>
+
+  <!-- Real Google Sign-In Customer Modal -->
+  <div id="authModal" class="modal" hidden>
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeAuth()">×</button>
+      <span class="eyebrow">GOOGLE AUTHENTICATION</span>
+      <h2>Sign in with Google</h2>
+      <p>Use your real Google Account to sync reservations across all devices.</p>
+      
+      <!-- Live Google Sign-In Button Container -->
+      <div id="googleBtnContainer" class="google-btn-container"></div>
+      <div id="authStatus" class="auth-status"></div>
+
+      <div class="google-cid-config">
+        <label class="meta-label">GOOGLE CLIENT ID CONFIGURATION</label>
+        <div class="cid-input-row">
+          <input type="text" id="googleClientIdInput" placeholder="Enter your Google OAuth Client ID (.apps.googleusercontent.com)">
+          <button type="button" class="btn-primary btn-sm" onclick="saveGoogleClientId()">Apply</button>
+        </div>
+        <small class="meta">Obtain your Client ID from <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a>.</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Restaurant Owner Auth Modal -->
+  <div id="ownerAuthModal" class="modal" hidden>
+    <div class="modal-card modal-card-wide">
+      <button class="modal-close" onclick="closeOwnerAuth()">×</button>
+      <span class="eyebrow">RESTAURANT OWNER LOGIN</span>
+      <h2>Access Owner Portal</h2>
+      <p>Select a restaurant demo account or enter owner credentials to manage table bookings.</p>
+
+      <div class="quick-demo-accounts">
+        <span class="meta-label">1-CLICK QUICK LOGIN FOR DEMO:</span>
+        <div class="demo-account-buttons">
+          <button class="demo-acc-btn" onclick="quickOwnerLogin('olive@tablekeeper.local', 'owner123')">
+            <strong>The Olive Garden</strong>
+            <small>olive@tablekeeper.local</small>
+          </button>
+          <button class="demo-acc-btn" onclick="quickOwnerLogin('juniper@tablekeeper.local', 'owner123')">
+            <strong>Juniper & Co.</strong>
+            <small>juniper@tablekeeper.local</small>
+          </button>
+          <button class="demo-acc-btn" onclick="quickOwnerLogin('saffron@tablekeeper.local', 'owner123')">
+            <strong>Saffron House</strong>
+            <small>saffron@tablekeeper.local</small>
+          </button>
+          <button class="demo-acc-btn" onclick="quickOwnerLogin('kumo@tablekeeper.local', 'owner123')">
+            <strong>Kumo</strong>
+            <small>kumo@tablekeeper.local</small>
+          </button>
+          <button class="demo-acc-btn" onclick="quickOwnerLogin('casa@tablekeeper.local', 'owner123')">
+            <strong>Casa Verde</strong>
+            <small>casa@tablekeeper.local</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"><span>OR MANUAL LOGIN</span></div>
+
+      <form id="ownerLoginForm" onsubmit="handleOwnerLoginSubmit(event)" class="owner-form">
+        <div class="form-group">
+          <label>Owner Email</label>
+          <input type="email" id="ownerEmail" placeholder="e.g. olive@tablekeeper.local" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="ownerPassword" value="owner123" required>
+        </div>
+        <div id="ownerAuthError" class="auth-error"></div>
+        <button type="submit" class="btn-primary btn-block">Sign In to Owner Portal →</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
