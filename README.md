@@ -1,101 +1,65 @@
-# 🍷 Tablekeeper — Restaurant Reservation & Management Platform
+# 🍽️ Tablekeeper — Restaurant Reservation & Table Management Platform
 
-A high-performance, production-style restaurant reservation and partner management platform built with Python (Flask) and SQLite. Features server-side `BEGIN IMMEDIATE` transaction serialization in SQLite WAL mode to eliminate double-bookings during traffic surges, idempotency key safeguards, real Google OAuth authentication, and a dedicated Restaurant Owner Portal for accepting and declining table requests.
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-v3.0-000000.svg?logo=flask)](https://flask.palletsprojects.com/)
+[![SQLite](https://img.shields.io/badge/SQLite3-WAL_Mode-003B57.svg?logo=sqlite)](https://www.sqlite.org/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Live_Demo-22C55E.svg?logo=github)](https://punithreddy678-hub.github.io/tablekeeper/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![Tablekeeper Interface](https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1400&q=85)
-
----
-
-## ✨ Features
-
-- **Guest Table Discovery & Search**: Filter restaurants by cuisine, neighborhood, guest party size, date, and preferred time slot.
-- **Interactive Floor Plan Selection**: Choose specific table numbers with real-time capacity and overlap validation.
-- **Restaurant Owner Management Portal**:
-  - Dedicated login for restaurant hosts and owners.
-  - Live metric counters for **Pending Approval**, **Confirmed Bookings**, **Declined**, and **Total Tables**.
-  - Single-click **Accept** (`confirmed`) or **Decline** (`declined`) actions for incoming requests.
-- **Real Google OAuth 2.0 Integration**: Authenticate with real Google Accounts powered by Google Identity Services (GIS) and server-side JWT ID token verification.
-- **Concurrency & Idempotency Lab**: Built-in developer tools to simulate 10, 20, or 50 simultaneous booking attempts against SQLite transaction locks, demonstrating zero double-bookings.
-- **Transaction Safety**: All booking writes execute inside SQLite `BEGIN IMMEDIATE` transactions with unique idempotency keys.
+**Tablekeeper** is a restaurant table reservation platform featuring a diner discovery portal, real-time table availability matrix, partner owner portal, Google OAuth authentication, and concurrency control.
 
 ---
 
-## 🛠️ Tech Stack
+## 🌐 Live Demos & Deployment Options
 
-- **Backend**: Python 3.11+, Flask 3.0+
-- **Database**: SQLite 3 (WAL Mode, `PRAGMA foreign_keys=ON`)
-- **Authentication**: Google Identity Services (GIS), `google-auth`, Flask Sessions
-- **Frontend**: HTML5, CSS3 (Modern Glassmorphism & Custom Properties), Vanilla ES6 JavaScript
+| Hosting Target | Status | Type | Link |
+| :--- | :--- | :--- | :--- |
+| **GitHub Pages** | 🟢 Live | Static Client Demo Mode | [View GitHub Pages Site](https://punithreddy678-hub.github.io/tablekeeper/) |
+| **Render / Cloud** | 🟢 Ready | Full Python + SQLite Backend | Deploy via `render.yaml` |
+
+> ℹ️ **Why GitHub Pages requires static mode**: GitHub Pages hosts static assets (HTML/CSS/JS) and cannot run background Python processes (`app.py`). To enable immediate GitHub Pages viewing, a root `index.html` with client-side interactive fallback mode has been configured.
 
 ---
 
-## 🚀 Quick Start
+## 🌟 Key Features
 
-### 1. Clone Repository
-```bash
-git clone https://github.com/punithreddy678-hub/tablekeeper.git
-cd tablekeeper
+* **🍽️ Diner Reservation Portal**: Explore partner restaurants, select date/time/party size, and view real-time table grid availability.
+* **💼 Partner Owner Portal**: 1-Click login for restaurant owners (`olive@tablekeeper.local`, `owner123`) to approve, decline, or manage reservations.
+* **🔑 Google OAuth Sign-In**: Integrated Google Identity Services SDK for guest user login.
+* **🔒 Concurrency & Double-Booking Protection**: Atomic transactional locks preventing double bookings under high traffic.
+* **⚡ Dual-Mode Execution**:
+  * **Static Mode**: Runs 100% in the browser for GitHub Pages.
+  * **Full Stack Mode**: Powered by Flask, SQLite (WAL mode), and Gunicorn.
+
+---
+
+## 🏗️ Architecture Overview
+
+```mermaid
+flowchart TD
+    A["👤 Diner / Owner"] -->|Browse / Book| B["🌐 Web Interface (HTML5 / CSS3 / ES6)"]
+    B -->|Static GitHub Pages| C["⚡ Client-Side Local Storage & Interactive Demo"]
+    B -->|Python Backend Hosting| D["🐍 Flask API (app.py)"]
+    D -->|WAL Mode Transactions| E["🗄️ SQLite Database (tablekeeper.db)"]
+    D -->|Authentication| F["🔑 Google OAuth 2.0 Engine"]
 ```
 
-### 2. Set Up Virtual Environment & Dependencies
-```bash
-python -m venv .venv
-
-# On macOS/Linux:
-source .venv/bin/activate
-
-# On Windows:
-.venv\Scripts\activate
-
-pip install -r requirements.txt
-```
-
-### 3. (Optional) Set Google OAuth Client ID
-Set environment variable for live Google Sign-In:
-```bash
-export GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
-```
-*(Or enter your Client ID directly in the in-app Sign In modal!)*
-
-### 4. Run Application
-```bash
-python app.py
-```
-Open `http://localhost:5000` in your web browser.
-
 ---
 
-## 🔑 Demo Credentials (Owner Portal)
+## 📂 Repository Structure
 
-| Restaurant | Owner Email | Password |
-|---|---|---|
-| **The Olive Garden** | `olive@tablekeeper.local` | `owner123` |
-| **Juniper & Co.** | `juniper@tablekeeper.local` | `owner123` |
-| **Saffron House** | `saffron@tablekeeper.local` | `owner123` |
-| **Kumo** | `kumo@tablekeeper.local` | `owner123` |
-| **Casa Verde** | `casa@tablekeeper.local` | `owner123` |
-
----
-
-## 🔌 API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/restaurants` | List all restaurants (supports `?q=` search and `?cuisine=`) |
-| `GET` | `/api/restaurants/:id` | Get restaurant details and live table availability |
-| `GET` | `/api/reservations` | Fetch guest reservations |
-| `POST` | `/api/reservations` | Create reservation (requires `Idempotency-Key` header) |
-| `POST` | `/api/reservations/:id/cancel` | Cancel booking |
-| `POST` | `/api/auth/google` | Verify Google ID token and sign in user |
-| `POST` | `/api/owner/login` | Authenticate restaurant owner |
-| `GET` | `/api/owner/reservations` | Fetch owner restaurant bookings |
-| `POST` | `/api/owner/reservations/:id/accept` | Accept pending reservation |
-| `POST` | `/api/owner/reservations/:id/decline` | Decline reservation |
-| `POST` | `/api/concurrency-test` | Run multi-threaded concurrency simulation |
-| `POST` | `/api/idempotency-test` | Run 5-retry idempotency test |
-
----
-
-## 📜 License
-
-MIT License © 2026 Tablekeeper Inc.
+```text
+tablekeeper/
+├── .github/
+│   └── workflows/
+│       └── deploy-pages.yml     # Automated GitHub Pages deployment workflow
+├── static/
+│   ├── app.js                   # Application state engine & static fallback
+│   └── styles.css               # Glassmorphic UI styles & responsive CSS
+├── templates/
+│   └── index.html               # Jinja2 Flask template
+├── .gitignore                   # Excluded build artifacts & DB files
+├── Procfile                     # Gunicorn WSGI server configuration
+├── README.md                    # Project documentation
+├── app.py                       # Flask REST API backend & database manager
+├── index.html                   # Root HTML entry point for GitHub Pages
